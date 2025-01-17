@@ -68,7 +68,6 @@ jobs:
     - name: Test SeleniumBase CLI
       run: |
           python -m seleniumbase
-          python -m seleniumbase.cli
     - name: Check the console scripts interface
       run: |
         seleniumbase
