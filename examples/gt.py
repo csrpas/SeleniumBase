@@ -10,4 +10,3 @@ with SB(uc=True, test=True, locale_code="en") as sb:
     sb.uc_gui_click_captcha()
     sb.sleep(2)
     print(sb.get_text("//*[@id='MasterGC_ContentBlockHolder_lblNombreProv']"))
-    
