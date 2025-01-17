@@ -55,19 +55,6 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       run: |
         sudo apt install google-chrome-stable
-    - name: Install dependencies
-      run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade seleniumbase
-          pip install -r requirements.txt
-    - name: Verify SeleniumBase Installation
-      run: |
-          pip list | grep seleniumbase
-          which python
-          which pip
-    - name: Test SeleniumBase CLI
-      run: |
-          python -m seleniumbase
     - name: Check the console scripts interface
       run: |
         seleniumbase
@@ -89,12 +76,12 @@ jobs:
       run: |
         python -c "from seleniumbase.core import detect_b_ver; print(detect_b_ver.get_binary_location('google-chrome'))"
         python -c "from seleniumbase import undetected; print(undetected.find_chrome_executable())"
-    - name: Run python raw_gt.py --debug
+    - name: Run python my_socialblade.py --debug
+      run: |
+        python my_socialblade.py --debug
+    - name: Run python raw_nike.py --debug
       run: |
         python raw_nike.py --debug
     - name: Run python raw_priceline.py --debug
       run: |
         python raw_priceline.py --debug
-    - name: Run python raw_gt.py --debug
-      run: |
-        python raw_gt.py --debug
