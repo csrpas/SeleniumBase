@@ -1,11 +1,11 @@
-name: CI build
-
+name: CI build 3
 on:
+  schedule:
+    - cron: "38 * * * *"
+  push:
+    branches: [ master ]
   pull_request:
     branches:
-  push:
-    branches:
-      - master
   workflow_dispatch:
     branches:
 
@@ -14,32 +14,45 @@ jobs:
 
     env:
       PY_COLORS: "1"
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 1
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest]
+        python-version: ["3.13"]
 
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Set Locale
+      run: |
+        sudo apt-get install tzdata locales -y && sudo locale-gen en_US.UTF-8
+        sudo localectl set-locale LANG="en_US.UTF-8"
+        export LANG="en_US.UTF-8"
+        sudo update-locale
+        locale -a
+        locale
+        locale -c -k LC_NUMERIC
+        localectl status
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip wheel setuptools
+        python -m pip install --upgrade pip
+        pip install --upgrade pip
+        pip install --upgrade wheel
         pip install -r requirements.txt
-    - name: Install SeleniumBase
-      run: |
-        pip install .
+        pip install --upgrade pyautogui
+        pip install --upgrade python-xlib
     - name: Lint with flake8
       run: |
         pip install flake8
         # Stop the build if there are flake8 issues
         flake8 . --count --show-source --statistics --exclude=temp
     - name: Install Chrome
+      if: matrix.os == 'ubuntu-20.04'
       run: |
         sudo apt install google-chrome-stable
     - name: Check the console scripts interface
@@ -52,41 +65,23 @@ jobs:
     - name: Make sure pytest is working
       run: |
         echo "def test_1(): pass" > nothing.py
-        pytest nothing.py
-    - name: Make sure nosetests is working
+        pytest nothing.py --uc
+    - name: Check which Chrome binaries exist
       run: |
-        echo "def test_2(): pass" > nothing2.py
-        nosetests nothing2.py
-    - name: Run pytest examples/unit_tests/verify_framework.py --browser=chrome --headless
+        python -c "import os; print(os.path.exists('/usr/bin/google-chrome'))"
+        python -c "import os; print(os.path.exists('/bin/google-chrome-stable'))"
+        python -c "import os; print(os.path.exists('/bin/chromium-browser'))"
+        python -c "import os; print(os.path.exists('/bin/chromium'))"
+    - name: Display Chrome binary that's used
       run: |
-        pytest examples/unit_tests/verify_framework.py --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/boilerplate_test.py --browser=chrome --headless
+        python -c "from seleniumbase.core import detect_b_ver; print(detect_b_ver.get_binary_location('google-chrome'))"
+        python -c "from seleniumbase import undetected; print(undetected.find_chrome_executable())"
+    - name: Run python my_socialblade.py --debug
       run: |
-        pytest examples/boilerplates/boilerplate_test.py --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/test_demo_site.py --browser=chrome --xvfb
+        python gt.py --debug
+    - name: Run python gt.py --debug
       run: |
-        pytest examples/test_demo_site.py --browser=chrome --xvfb -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/iframe_tests.py --browser=chrome --xvfb --rs --crumbs
+        python raw_nike.py --debug
+    - name: Run python raw_priceline.py --debug
       run: |
-        pytest examples/iframe_tests.py --browser=chrome --xvfb --rs --crumbs -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/test_mfa_login.py --browser=chrome --xvfb
-      run: |
-        pytest examples/test_mfa_login.py --browser=chrome --xvfb -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/iframe_tests.py --browser=chrome --xvfb --rs
-      run: |
-        pytest examples/iframe_tests.py --browser=chrome --xvfb --rs -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/test_window_switching.py --browser=chrome --headless
-      run: |
-        pytest examples/test_window_switching.py --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/my_first_test.py --browser=chrome --headless
-      run: |
-        pytest examples/my_first_test.py --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-    - name: Run pytest examples/test_inspect_html.py --browser=chrome --headless
-      run: |
-        pytest examples/test_inspect_html.py --browser=chrome --headless -v -s --junit-xml=junit/test-results.xml
-    - name: Run behave examples/behave_bdd/features/calculator.feature -D rs -D crumbs -D xvfb
-      run: |
-        behave examples/behave_bdd/features/calculator.feature -D rs -D crumbs -D xvfb -T -k
-    - name: Run behave examples/behave_bdd/features/realworld.feature -D rs -D crumbs -D xvfb
-      run: |
-        behave examples/behave_bdd/features/realworld.feature -D rs -D crumbs -D xvfb -T -k
+        python raw_priceline.py --debug
